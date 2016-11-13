@@ -101,7 +101,7 @@ data = {
     'p%24st': 'pubmed'
 }
 
-def get_curr_data(page):
+def curr_data(page):
     return {
         'email_start': str(page*page_size+1),
         'coll_start': str(page*page_size+1),
@@ -109,14 +109,6 @@ def get_curr_data(page):
         'EntrezSystem2.PEntrez.PubMed.Pubmed_ResultsPanel.Entrez_Pager.CurrPage': str(page+1),
         'EntrezSystem2.PEntrez.PubMed.Pubmed_ResultsPanel.Entrez_Pager.cPage': str(page+1),
     }
-
-def get_xml(page):
-    curr_data = {**data, **get_curr_data(page)}
-    r = requests.post('https://www.ncbi.nlm.nih.gov/pubmed',
-        headers=headers,
-        data=curr_data
-    )
-    return r.text
 
 email_re = re.compile(r" ([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+).$")
 
@@ -147,20 +139,36 @@ def extract_author(author):
         email=email
     )
 
-data = get_xml(0)
+rs = (
+    grequests.post('https://www.ncbi.nlm.nih.gov/pubmed',
+        headers=headers,
+        data={**data, **curr_data(page)}
+    )
+    for page in range(103)
+)
 
-soup = BeautifulSoup(data, "lxml")
-soup = BeautifulSoup(soup.pre.text, "lxml")
-results = [
-    extract_author(author)
-    for author in soup.find_all('author')
-]
+for i, r in enumerate(grequests.map(rs, size=20)):
+    data = r.text
+    with open('pages/{}.html'.format(i), 'w') as f:
+        f.write(data)
 
-with open('out2.csv', 'w') as csvfile:
-    fieldnames = ['foreName', 'lastName', 'email', 'affiliation1',
-                  'affiliation2', 'affiliation3', 'affiliation4']
-    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+def process():
+    results = []
+    for i in range(103):
+        with open('pages/{}.html'.format(i)) as f:
+            data = f.read()
+        soup = BeautifulSoup(data, "lxml")
+        soup = BeautifulSoup(soup.pre.text, "lxml")
+        results += [
+            extract_author(author)
+            for author in soup.find_all('author')
+        ]
 
-    writer.writeheader()
-    for result in results:
-        writer.writerow(result)
+    with open('out3.csv', 'w') as csvfile:
+        fieldnames = ['foreName', 'lastName', 'email', 'affiliation1',
+                      'affiliation2', 'affiliation3', 'affiliation4']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+        writer.writeheader()
+        for result in results:
+            writer.writerow(result)
