@@ -1,5 +1,4 @@
 import csv
-import json
 import re
 
 from bs4 import BeautifulSoup
@@ -19,6 +18,8 @@ def extract_author(author):
         for affiliation in author.find_all('affiliation')
     ]
     email = ''
+    if len(affiliations) > 4:
+        raise Exception("Too many affiliations")
     for affiliation in affiliations:
         emails = email_re.findall(affiliation)
         if len(emails) > 0:
@@ -35,10 +36,11 @@ def extract_author(author):
 
 results = []
 for i in range(103):
-    with open('pages/{}.html'.format(i)) as f:
+    if i % 10 == 0:
+        print("Processing page {}".format(i))
+    with open('pages/{}.xml'.format(i)) as f:
         data = f.read()
     soup = BeautifulSoup(data, "lxml")
-    soup = BeautifulSoup(soup.pre.text, "lxml")
     results += [
         extract_author(author)
         for author in soup.find_all('author')
