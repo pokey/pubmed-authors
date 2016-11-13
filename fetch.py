@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
 import grequests
 
-from constants import page_size, num_pages
+from constants import page_size, num_pages, query
 
 # Headers for HTTP request
 headers = {
@@ -21,7 +21,7 @@ headers = {
 
 # POST data for HTTP request
 data = {
-    'term': 'tissue+cryopreservation+',
+    'term': query,
     'EntrezSystem2.PEntrez.PubMed.Pubmed_PageController.PreviousPageName': 'results',
     'EntrezSystem2.PEntrez.PubMed.Pubmed_PageController.SpecialPageName': '',
     'EntrezSystem2.PEntrez.PubMed.Pubmed_Facets.FacetsUrlFrag': 'filters%3D',
@@ -35,7 +35,7 @@ data = {
     'EntrezSystem2.PEntrez.PubMed.Pubmed_ResultsPanel.Pubmed_DisplayBar.email_sort': '',
     'EntrezSystem2.PEntrez.PubMed.Pubmed_ResultsPanel.Pubmed_DisplayBar.email_count': str(page_size),
     'email_address': '',
-    'email_subj': 'tissue+cryopreservation+-+PubMed',
+    'email_subj': '{}-+PubMed'.format(query),
     'email_add_text': '',
     'EmailCheck1': '',
     'EmailCheck2': '',
@@ -81,7 +81,7 @@ data = {
     'EntrezSystem2.PEntrez.PubMed.Pubmed_ResultsPanel.TimelineAdPlaceHolder.BlobID': 'NCID_1_8027235_130.14.22.215_9001_1479035434_1436486768_0MetA0_S_MegaStore_F_1',
     'EntrezSystem2.PEntrez.DbConnector.Db': 'pubmed',
     'EntrezSystem2.PEntrez.DbConnector.LastDb': 'pubmed',
-    'EntrezSystem2.PEntrez.DbConnector.Term': 'tissue+cryopreservation',
+    'EntrezSystem2.PEntrez.DbConnector.Term': query,
     'EntrezSystem2.PEntrez.DbConnector.LastTabCmd': '',
     'EntrezSystem2.PEntrez.DbConnector.LastQueryKey': '1',
     'EntrezSystem2.PEntrez.DbConnector.IdsFromResult': '',
@@ -116,7 +116,9 @@ rs = (
     for page in range(num_pages)
 )
 
-# Execute through requests and exract xml
+# Execute through requests and extract xml
+# Note that the |size| parameter is used to throttle requests so server doesn't
+# shut us down
 for i, r in enumerate(grequests.map(rs, size=20)):
     data = r.text
     soup = BeautifulSoup(data, "lxml")
