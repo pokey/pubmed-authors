@@ -3,15 +3,21 @@ import re
 
 from bs4 import BeautifulSoup
 
+from constants import num_pages
+
+# Regex to extract email address
 email_re = re.compile(r" ([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+).$")
 
+# Helper function to handle case where author has less then 4 affiliations
 def get_affiliation(affiliations, idx):
     return affiliations[idx] if len(affiliations) > idx else ''
 
+# Helper functino to handle case where author is lacking a name
 def getAttr(el, attr):
     ret = el.find(attr)
     return '' if ret == None else str(ret.string)
 
+# Given an xml element representing an author, extract information
 def extract_author(author):
     affiliations = [
         str(affiliation.string)
@@ -34,8 +40,9 @@ def extract_author(author):
         email=email
     )
 
+# Iterate through all the pages and extract all authors
 results = []
-for i in range(103):
+for i in range(num_pages):
     if i % 10 == 0:
         print("Processing page {}".format(i))
     with open('pages/{}.xml'.format(i)) as f:
@@ -46,6 +53,7 @@ for i in range(103):
         for author in soup.find_all('author')
     ]
 
+# Output information to csv file
 with open('out.csv', 'w') as csvfile:
     fieldnames = ['foreName', 'lastName', 'email', 'affiliation1',
                   'affiliation2', 'affiliation3', 'affiliation4']

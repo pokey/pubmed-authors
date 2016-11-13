@@ -1,6 +1,9 @@
 from bs4 import BeautifulSoup
 import grequests
 
+from constants import page_size, num_pages
+
+# Headers for HTTP request
 headers = {
     'Pragma': 'no-cache',
     'Origin': 'https://www.ncbi.nlm.nih.gov',
@@ -16,9 +19,7 @@ headers = {
     'Connection': 'keep-alive'
 }
 
-# This is the maximum page size
-page_size = 100
-
+# POST data for HTTP request
 data = {
     'term': 'tissue+cryopreservation+',
     'EntrezSystem2.PEntrez.PubMed.Pubmed_PageController.PreviousPageName': 'results',
@@ -96,6 +97,7 @@ data = {
     'p%24st': 'pubmed'
 }
 
+# Additional data for POST request that specifies which page to retrieve
 def curr_data(page):
     return {
         'email_start': str(page*page_size+1),
@@ -105,14 +107,16 @@ def curr_data(page):
         'EntrezSystem2.PEntrez.PubMed.Pubmed_ResultsPanel.Entrez_Pager.cPage': str(page+1),
     }
 
+# This generates the requests 
 rs = (
     grequests.post('https://www.ncbi.nlm.nih.gov/pubmed',
         headers=headers,
         data={**data, **curr_data(page)}
     )
-    for page in range(103)
+    for page in range(num_pages)
 )
 
+# Execute through requests and exract xml
 for i, r in enumerate(grequests.map(rs, size=20)):
     data = r.text
     soup = BeautifulSoup(data, "lxml")
