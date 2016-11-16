@@ -1,7 +1,7 @@
 import re
 
 # Regex to extract email address
-email_re = re.compile(r" ([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+).$")
+email_re = re.compile(r" ([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)\.$")
 
 # Helper function to handle case where author has less then 4 affiliations
 def get_affiliation(affiliations, idx):
