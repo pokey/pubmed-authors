@@ -5,7 +5,8 @@ import grequests
 import requests
 
 # This is the maximum page size allowed.  Don't change this
-page_size = 100
+page_size = 200
+max_concurrent = 5
 
 # Generate url to search for papers
 def _get_search_url(term):
@@ -38,10 +39,10 @@ class Fetcher(object):
     def __init__(self, term):
         self.term = term
 
-    # Total number of pages
+    # Total number of papers
     @property
     def total(self):
-        return self.num_pages
+        return self.num_papers
 
     # Do initial search to get list of papers
     def search(self):
@@ -50,10 +51,10 @@ class Fetcher(object):
 
         self.webenv = soup.webenv.string
         self.query_key = soup.querykey.string
-        papers = int(soup.count.string)
+        self.num_papers = int(soup.count.string)
 
         # Compute the number of pages that there will be
-        self.num_pages = papers // page_size + 1
+        self.num_pages = self.num_papers // page_size + 1
 
     # Yield info about the papers
     def get_pages(self):
@@ -66,5 +67,5 @@ class Fetcher(object):
         # Execute the requests and yield the results as xml
         # Note that the |size| parameter is used to throttle requests so server doesn't
         # shut us down
-        for r in grequests.imap(rs, size=10):
+        for r in grequests.imap(rs, size=max_concurrent):
             yield r.text
