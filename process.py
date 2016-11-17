@@ -23,8 +23,6 @@ def extract_author(author):
         for affiliation in author.find_all('affiliation')
     ]
     email = ''
-    if len(affiliations) > 4:
-        raise Exception("Too many affiliations")
     for affiliation in affiliations:
         emails = _email_re.findall(affiliation)
         if len(emails) > 0:
