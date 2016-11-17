@@ -1,11 +1,12 @@
 import csv
 import sys
+from itertools import chain
 
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 
 from fetch import Fetcher
-from process import extract_author, fieldnames
+from process import extract_authors, fieldnames
 
 # Get term from command-line args
 term = " ".join(sys.argv[1:])
@@ -19,11 +20,13 @@ results = []
 with tqdm(total=fetcher.total, unit='paper') as pbar:
     for data in fetcher.get_pages():
         soup = BeautifulSoup(data, "lxml")
-        results += [
-            extract_author(author)
-            for author in soup.find_all('author')
-        ]
-        pbar.update(len(soup.find_all('pubmedarticle')))
+        papers = soup.find_all('pubmedarticle')
+
+        for paper in papers:
+            results += extract_authors(paper)
+
+        # Update progress bar
+        pbar.update(len(papers))
 
 # Output information to csv file
 with open('out.csv', 'w') as csvfile:

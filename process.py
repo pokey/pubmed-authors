@@ -1,7 +1,7 @@
 import re
 
 # Field names for output csv
-fieldnames = ['foreName', 'lastName', 'email',
+fieldnames = ['title', 'foreName', 'lastName', 'email',
               'affiliation1', 'affiliation2', 'affiliation3', 'affiliation4']
 
 # Regex to extract email address
@@ -17,7 +17,7 @@ def _getAttr(el, attr):
     return '' if ret == None else str(ret.string)
 
 # Given an xml element representing an author, extract information
-def extract_author(author):
+def _extract_author(title, author):
     affiliations = [
         str(affiliation.string)
         for affiliation in author.find_all('affiliation')
@@ -34,5 +34,11 @@ def extract_author(author):
         affiliation2=_get_affiliation(affiliations, 1),
         affiliation3=_get_affiliation(affiliations, 2),
         affiliation4=_get_affiliation(affiliations, 3),
-        email=email
+        email=email,
+        title=title,
     )
+
+def extract_authors(paper):
+    title = paper.articletitle.string
+    for author in paper.find_all('author'):
+        yield _extract_author(title, author)
