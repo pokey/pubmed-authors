@@ -5,8 +5,8 @@ import grequests
 import requests
 
 # This is the maximum page size allowed.  Don't change this
-page_size = 200
-max_concurrent = 5
+page_size = 100
+max_concurrent = 20
 
 # Generate url to search for papers
 def _get_search_url(term):
@@ -20,14 +20,14 @@ def _get_search_url(term):
 
 
 # Generate url to fetch info about papers
-def _get_fetch_url(webenv, query_key, page):
+def _get_fetch_url(webenv, query_key, paper_idx):
     query = urlencode(dict(
         db='pubmed',
         query_key=query_key,
         WebEnv=webenv,
         retmode='xml',
         retmax=str(page_size),
-        retstart=str(page*page_size)
+        retstart=str(paper_idx)
     ))
     return ('https://eutils.ncbi.nlm.nih.gov/'
             'entrez/eutils/efetch.fcgi?{}').format(query)
@@ -53,19 +53,32 @@ class Fetcher(object):
         self.query_key = soup.querykey.string
         self.num_papers = int(soup.count.string)
 
-        # Compute the number of pages that there will be
-        self.num_pages = self.num_papers // page_size + 1
-
     # Yield info about the papers
     def get_pages(self):
-        # This generates the requests 
-        rs = (
-            grequests.get(_get_fetch_url(self.webenv, self.query_key, page))
-            for page in range(self.num_pages)
-        )
+        # Urls to fetch papers |page_size| at a time
+        urls = [
+            _get_fetch_url(self.webenv, self.query_key, paper_idx)
+            for paper_idx in range(0, self.num_papers, page_size)
+        ]
 
-        # Execute the requests and yield the results as xml
-        # Note that the |size| parameter is used to throttle requests so server doesn't
-        # shut us down
-        for r in grequests.imap(rs, size=max_concurrent):
-            yield r.text
+        # Keep track of failed requests here to try again
+        failed_urls = []
+
+        # Keep iterating through urls until all have succeeded
+        while len(urls) > 0:
+            rs = (
+                grequests.get(url)
+                for url in urls
+            )
+
+            # Execute the requests and yield the results as xml
+            # Note that the |size| parameter is used to throttle requests so server doesn't
+            # shut us down
+            for r in grequests.imap(rs, size=max_concurrent):
+                if r.status_code != 200:
+                    failed_urls.append(r.request.url)
+                else:
+                    yield r.text
+
+            urls = failed_urls
+            failed_urls = []
