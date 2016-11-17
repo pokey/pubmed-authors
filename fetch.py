@@ -7,6 +7,7 @@ import requests
 # This is the maximum page size allowed.  Don't change this
 page_size = 100
 max_concurrent = 20
+max_attempts = 5
 
 # Generate url to search for papers
 def _get_search_url(term):
@@ -64,8 +65,14 @@ class Fetcher(object):
         # Keep track of failed requests here to try again
         failed_urls = []
 
+        # Don't try more than max_attempts times
+        attempts = 0
+
         # Keep iterating through urls until all have succeeded
         while len(urls) > 0:
+            if attempts == max_attempts:
+                raise Exception("Too many failures")
+
             rs = (
                 grequests.get(url)
                 for url in urls
@@ -82,3 +89,4 @@ class Fetcher(object):
 
             urls = failed_urls
             failed_urls = []
+            attempts += 1
