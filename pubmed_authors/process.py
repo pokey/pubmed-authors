@@ -1,5 +1,6 @@
 import re
 
+
 # Field names for output csv
 fieldnames = ['title', 'journal', 'foreName', 'lastName', 'email',
               'affiliation1', 'affiliation2', 'affiliation3', 'affiliation4']

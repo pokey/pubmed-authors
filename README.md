@@ -14,7 +14,7 @@ Installing on OS X
 
    ```
    brew install python3
-   pip3 install -r requirements.txt
+   pip3 install -e .
    ```
 
 Running on OS X
@@ -23,7 +23,12 @@ Running on OS X
 Run
 
 ```
-python3 main.py tissue cryopreservation
+pubmed_authors tissue cryopreservation
 ```
 
 The output will be in `out.csv`.
+
+Credits
+-------
+This package was created with
+[Cookiecutter](https://github.com/audreyr/cookiecutter-pypackage).
