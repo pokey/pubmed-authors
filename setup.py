@@ -11,7 +11,7 @@ with open('HISTORY.rst') as history_file:
 
 requirements = [
     'Click>=6.7',
-    'pubmedasync>=0.3.1',
+    'pubmedasync>=0.4.1',
 ]
 
 test_requirements = [
